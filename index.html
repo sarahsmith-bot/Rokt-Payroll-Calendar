@@ -224,9 +224,9 @@ tbody td:last-child{border-right:none}
         <div class="tw"><table>
           <thead><tr>
             <th style="min-width:130px">Entity</th><th style="min-width:120px">Pay Date</th>
-            <th style="min-width:140px">People Team Input</th><th style="min-width:155px">Payroll Systems Input</th>
-            <th style="min-width:150px">CFO Dashboard Ready</th><th style="min-width:150px">CEO Dashboard Ready</th>
-            <th style="min-width:150px">CEO Review Deadline</th><th style="min-width:145px">Approval in Systems</th>
+            <th style="min-width:140px">People Data Due</th><th style="min-width:155px">Systems Input Due</th>
+            <th style="min-width:150px">CFO &amp; People Ops Review Ready</th><th style="min-width:150px">CEO Review Ready</th>
+            <th style="min-width:150px">CEO Approval Due</th><th style="min-width:145px">Payroll Systems Approval</th>
           </tr></thead>
           <tbody id="ab"></tbody>
         </table></div>
@@ -371,6 +371,13 @@ function applyF(){
   function sorter(a,b){var av=a[sCol]||'',bv=b[sCol]||'';return sAsc?av.localeCompare(bv):bv.localeCompare(av);}
   fActive=base.filter(function(r){return r.pay_date>=TODAY;}).sort(sorter);
   fArch=base.filter(function(r){return r.pay_date<TODAY;}).sort(function(a,b){return b.pay_date.localeCompare(a.pay_date);});
+  nextPayDate=(function(){
+    var seen={}, future=[];
+    fActive.map(function(d){return d.pay_date;}).filter(function(d){return d&&d>=TODAY;}).sort().forEach(function(d){
+      if(!seen[d]){seen[d]=true;future.push(d);}
+    });
+    return future.length>1?future[1]:future[0]||null;
+  })();
   pg=1;
   document.getElementById('rcnt').textContent=fActive.length+' active';
   document.getElementById('acnt').textContent=fArch.length;
@@ -398,7 +405,7 @@ function mkRow(r,isA,idx){
   var isT=(r.pay_date===TODAY);
   var fl='';
   if(isT)fl='<span class="flag" style="background:#34c759">today</span>';
-  else if(isA)fl='<span class="flag" style="background:var(--beetroot)">upcoming</span>';
+  else if(isA&&r.pay_date===nextPayDate)fl='<span class="flag" style="background:var(--beetroot)">upcoming</span>';
   var cls=(isA&&!isT)?'up':'';
   var h='<tr class="'+cls+'" onclick="openRow('+idx+')">';
   h+='<td><span class="eb" style="background:'+col.bg+';color:'+col.text+'">';
@@ -416,6 +423,15 @@ function mkRow(r,isA,idx){
 }
 
 function openRow(idx){showP(rowStore[idx]);}
+
+var nextPayDate=(function(){
+  var seen={}, future=[];
+  allData.map(function(d){return d.pay_date;}).filter(function(d){return d&&d>=TODAY;}).sort().forEach(function(d){
+    if(!seen[d]){seen[d]=true;future.push(d);}
+  });
+  // Index 0 = currently being processed, index 1 = truly upcoming
+  return future.length>1?future[1]:future[0]||null;
+})();
 
 function renderTbl(){
   rowStore=[];
