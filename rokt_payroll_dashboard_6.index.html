@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rokt FY27 Global Payroll Calendar</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --beetroot:#C20075;--wine:#480029;--gray:#86868B;
+  --black:#000;--bg:#f5f5f7;--border:#e0e0e5;
+}
+body{font-family:"Archivo",sans-serif;background:var(--bg);color:var(--black);font-size:13px;min-height:100vh}
+
+/* HEADER */
+.header{background:var(--beetroot);padding:0 28px;display:flex;align-items:center;justify-content:space-between;height:56px;position:sticky;top:0;z-index:100;box-shadow:0 2px 10px rgba(194,0,117,.3)}
+.hl{display:flex;align-items:center;gap:14px}
+.logo{font-weight:700;font-size:20px;color:#fff;letter-spacing:2.5px}
+.hdiv{width:1px;height:26px;background:rgba(255,255,255,.3)}
+.htitle{font-size:13px;font-weight:500;color:rgba(255,255,255,.9)}
+.hbadge{background:rgba(255,255,255,.2);color:#fff;font-size:11px;font-weight:600;padding:2px 9px;border-radius:20px}
+.btn-up{background:rgba(255,255,255,.15);border:1.5px solid rgba(255,255,255,.4);color:#fff;padding:6px 14px;border-radius:6px;font-family:"Archivo",sans-serif;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:7px}
+.btn-up:hover{background:rgba(255,255,255,.25)}
+#fi{display:none}
+
+/* LAYOUT */
+.main{max-width:1400px;margin:0 auto;padding:20px 24px 60px}
+
+/* FILTERS */
+.fc{background:#fff;border-radius:10px;border:1px solid var(--border);padding:16px 20px;margin-bottom:16px}
+.ftitle{font-size:10px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px}
+.frow{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end}
+.fg{display:flex;flex-direction:column;gap:4px}
+.fl{font-size:11px;font-weight:600;color:var(--black)}
+.fs{font-family:"Archivo",sans-serif;font-size:12px;border:1.5px solid var(--border);border-radius:6px;padding:6px 26px 6px 9px;color:var(--black);background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='5'%3E%3Cpath d='M0 0l4.5 5L9 0z' fill='%2386868B'/%3E%3C/svg%3E") no-repeat right 9px center;outline:none;min-width:150px;height:34px;-webkit-appearance:none;appearance:none;cursor:pointer}
+.fs:focus{border-color:var(--beetroot)}
+.egrid{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.chip{display:flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;border:1.5px solid var(--border);cursor:pointer;font-size:11px;font-weight:500;background:#fff;user-select:none;white-space:nowrap;transition:all .15s}
+.chip.on{border-color:var(--beetroot);background:#fff0fb;color:var(--beetroot);font-weight:700}
+.dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.bclr{font-family:"Archivo",sans-serif;font-size:11px;font-weight:600;padding:5px 12px;border-radius:6px;border:1.5px solid var(--beetroot);cursor:pointer;background:#fff;color:var(--beetroot);height:34px}
+.bclr:hover{background:#fff0fb}
+
+/* TABLE CARD */
+.tc{background:#fff;border-radius:10px;border:1px solid var(--border);overflow:hidden}
+.th{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border)}
+.thl{display:flex;align-items:center;gap:8px}
+.tt{font-size:14px;font-weight:700}
+.rc{background:#f0f0f5;color:var(--gray);font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px}
+.tctrl{display:flex;align-items:center;gap:8px}
+.si{font-family:"Archivo",sans-serif;font-size:12px;border:1.5px solid var(--border);border-radius:6px;padding:5px 9px 5px 28px;outline:none;width:170px;height:32px;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2386868B' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='M21 21l-4.35-4.35'/%3E%3C/svg%3E") no-repeat 8px center}
+.si:focus{border-color:var(--beetroot)}
+.vtog{display:flex;border:1.5px solid var(--border);border-radius:6px;overflow:hidden}
+.vb{padding:4px 11px;font-size:11px;font-weight:600;font-family:"Archivo",sans-serif;border:none;cursor:pointer;background:#fff;color:var(--gray)}
+.vb.on{background:var(--beetroot);color:#fff}
+
+/* TABLE */
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12px;min-width:900px}
+thead th{
+  background:#1a1a1a;color:#fff;
+  padding:9px 12px;text-align:left;
+  font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.7px;
+  white-space:nowrap;cursor:pointer;user-select:none;
+  border-right:1px solid #333;
+}
+thead th:last-child{border-right:none}
+thead th:hover{background:#2a2a2a}
+thead th.sorted{background:var(--wine)}
+tbody tr{border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:#fdf0f8}
+tbody tr.up{background:#fff5fb}
+tbody tr.up:hover{background:#fce8f5}
+tbody td{
+  padding:9px 12px;vertical-align:middle;
+  border-right:1px solid #f0f0f5;
+  white-space:nowrap;
+}
+tbody td:last-child{border-right:none}
+.eb{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:10px;font-size:11px;font-weight:600;white-space:nowrap}
+.edot{width:6px;height:6px;border-radius:50%;flex-shrink:0;display:inline-block}
+.dp2{color:var(--gray)}
+.dt2{color:var(--beetroot);font-weight:700}
+.du{color:#007aff}
+.pdc{font-weight:700;font-size:12px}
+.flag{display:inline-block;color:#fff;font-size:9px;font-weight:700;padding:1px 5px;border-radius:6px;margin-left:5px;text-transform:uppercase;letter-spacing:.4px;vertical-align:middle}
+.null-cell{color:#d0d0d5}
+
+/* ARCHIVE */
+.arow{display:flex;align-items:center;gap:10px;padding:9px 16px;background:#f5f5f7;border-top:2px solid var(--border);cursor:pointer;transition:background .1s}
+.arow:hover{background:#ebebeb}
+.albl{font-size:11px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:.7px}
+.acnt{background:#ddd;color:var(--gray);font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px}
+.achev{margin-left:auto;color:var(--gray);font-size:11px;display:inline-block;transition:transform .2s}
+.achev.open{transform:rotate(180deg)}
+#archiveBody tr{opacity:.55}
+#archiveBody tr:hover{opacity:.9;background:#f9f0f8}
+
+/* NO DATA */
+.nodata{text-align:center;padding:40px 20px;color:var(--gray);font-size:14px}
+.nodata .ico{display:block;font-size:32px;margin-bottom:8px}
+
+/* PAGINATION */
+.pg{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-top:1px solid var(--border);background:#fafafa}
+.pgi{font-size:11px;color:var(--gray)}
+.pbs{display:flex;gap:3px}
+.pb{font-family:"Archivo",sans-serif;font-size:11px;font-weight:600;padding:4px 10px;border-radius:5px;border:1.5px solid var(--border);background:#fff;cursor:pointer;color:var(--black)}
+.pb:hover:not(:disabled){border-color:var(--beetroot);color:var(--beetroot)}
+.pb:disabled{opacity:.35;cursor:not-allowed}
+.pb.on{background:var(--beetroot);border-color:var(--beetroot);color:#fff}
+.pps{font-family:"Archivo",sans-serif;font-size:11px;border:1.5px solid var(--border);border-radius:5px;padding:3px 7px;cursor:pointer;outline:none}
+
+/* CALENDAR */
+.calcont{padding:16px}
+.mnav{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.mnbtn{background:#fff;border:1.5px solid var(--border);border-radius:6px;padding:5px 12px;font-family:"Archivo",sans-serif;font-size:12px;font-weight:600;cursor:pointer}
+.mnbtn:hover{border-color:var(--beetroot);color:var(--beetroot)}
+.mttl{font-size:18px;font-weight:700}
+.cgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.cdh{background:#1a1a1a;color:#fff;text-align:center;padding:8px 4px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+.cd{background:#fff;min-height:100px;padding:4px 5px}
+.cd.om{background:#f8f8f8}
+.cd.tod{background:#fff3f9}
+.cd.tod .cdn{color:var(--beetroot);font-weight:700}
+.cdn{font-size:11px;font-weight:600;color:var(--gray);margin-bottom:3px}
+.cev{font-size:9px;font-weight:600;padding:2px 4px;border-radius:3px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;display:block}
+.ckey{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
+.cki{display:flex;align-items:center;gap:4px;font-size:11px;color:#333}
+.ckd{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+
+/* DETAIL PANEL */
+.panel{position:fixed;top:0;right:-420px;width:390px;height:100vh;background:#fff;border-left:1px solid var(--border);box-shadow:-6px 0 28px rgba(0,0,0,.1);z-index:200;transition:right .25s ease;overflow-y:auto}
+.panel.open{right:0}
+.pnlh{background:var(--beetroot);color:#fff;padding:16px 20px;display:flex;align-items:center;justify-content:space-between}
+.pnlh h3{font-size:14px;font-weight:700}
+.pnlcl{background:none;border:none;color:#fff;font-size:20px;cursor:pointer;line-height:1;opacity:.8}
+.pnlcl:hover{opacity:1}
+.pnlb{padding:20px}
+.pnls{margin-bottom:20px}
+.pnlst{font-size:10px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:.9px;margin-bottom:9px;border-bottom:1px solid var(--border);padding-bottom:6px}
+.tl{display:flex;flex-direction:column}
+.tli{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--border)}
+.tli:last-child{border-bottom:none}
+.tldot{width:9px;height:9px;border-radius:50%;margin-top:3px;flex-shrink:0}
+.tll{font-size:12px;font-weight:600}
+.tldate{font-size:11px;color:var(--gray);margin-top:1px}
+
+/* DROP / TOAST */
+.dov{display:none;position:fixed;inset:0;background:rgba(194,0,117,.08);border:3px dashed var(--beetroot);z-index:999;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:var(--beetroot);backdrop-filter:blur(2px)}
+.dov.vis{display:flex}
+.toast{position:fixed;bottom:20px;right:20px;background:#111;color:#fff;padding:10px 16px;border-radius:8px;font-size:12px;font-weight:500;z-index:9999;transform:translateY(60px);opacity:0;transition:all .3s;max-width:320px}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.ok{border-left:4px solid #34c759}
+.toast.err{border-left:4px solid #ff3b30}
+</style>
+</head>
+<body>
+<div class="dov" id="dov">&#128194; Drop updated Excel here</div>
+<header class="header">
+  <div class="hl">
+    <div class="logo">ROKT</div>
+    <div class="hdiv"></div>
+    <div class="htitle">Global Payroll Calendar</div>
+    <div class="hbadge">FY27</div>
+  </div>
+  <label class="btn-up" for="fi">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+    Load Updated Excel
+  </label>
+  <input type="file" id="fi" accept=".xlsx,.xls">
+</header>
+
+<div class="main">
+  <div class="fc">
+    <div class="ftitle">Filters</div>
+    <div class="egrid" id="chips"></div>
+    <div class="frow">
+      <div class="fg"><label class="fl">Pay Date</label><select id="pdf" class="fs" style="min-width:190px"></select></div>
+      <div class="fg"><label class="fl">Month</label><select id="mf" class="fs"></select></div>
+      <div class="fg"><label class="fl">Year</label><select id="yf" class="fs"></select></div>
+      <div class="fg" style="justify-content:flex-end"><label class="fl" style="visibility:hidden">x</label><button class="bclr" onclick="clearF()">Clear All</button></div>
+    </div>
+  </div>
+
+  <div class="tc">
+    <div class="th">
+      <div class="thl"><span class="tt">Payroll Schedule</span><span class="rc" id="rcnt">0 active</span></div>
+      <div class="tctrl">
+        <input class="si" id="sri" placeholder="Search entity...">
+        <div class="vtog">
+          <button class="vb on" id="vtbl" onclick="setV('table')">Table</button>
+          <button class="vb" id="vcal" onclick="setV('cal')">Calendar</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="tv">
+      <div class="tw">
+        <table>
+          <thead><tr>
+            <th onclick="srt('entity')" style="min-width:160px">Entity</th>
+            <th onclick="srt('pay_date')" style="min-width:120px">Pay Date</th>
+            <th onclick="srt('people_team_input')" style="min-width:140px">People Team Input</th>
+            <th onclick="srt('payroll_systems_input')" style="min-width:155px">Payroll Systems Input</th>
+            <th onclick="srt('dashboard_cfos_ready')" style="min-width:150px">CFO Dashboard Ready</th>
+            <th onclick="srt('dashboard_ceo_ready')" style="min-width:150px">CEO Dashboard Ready</th>
+            <th onclick="srt('ceo_review_deadline')" style="min-width:150px">CEO Review Deadline</th>
+            <th onclick="srt('approval_in_systems')" style="min-width:145px">Approval in Systems</th>
+          </tr></thead>
+          <tbody id="tb"></tbody>
+        </table>
+      </div>
+
+      <div class="arow" onclick="togArch()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#86868B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
+        <span class="albl">Archived &mdash; Past Pay Dates</span>
+        <span class="acnt" id="acnt">0</span>
+        <span class="achev" id="achev">&#9660;</span>
+      </div>
+      <div id="as" style="display:none">
+        <div class="tw"><table>
+          <thead><tr>
+            <th style="min-width:130px">Entity</th><th style="min-width:120px">Pay Date</th>
+            <th style="min-width:140px">People Team Input</th><th style="min-width:155px">Payroll Systems Input</th>
+            <th style="min-width:150px">CFO Dashboard Ready</th><th style="min-width:150px">CEO Dashboard Ready</th>
+            <th style="min-width:150px">CEO Review Deadline</th><th style="min-width:145px">Approval in Systems</th>
+          </tr></thead>
+          <tbody id="ab"></tbody>
+        </table></div>
+      </div>
+
+      <div class="pg" id="pgbar">
+        <div class="pgi" id="pgi"></div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="font-size:11px;color:var(--gray)">Rows: <select class="pps" id="pps" onchange="chPP()"><option value="25">25</option><option value="50">50</option><option value="9999">All</option></select></div>
+          <div class="pbs" id="pbs"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="cv" style="display:none">
+      <div class="calcont">
+        <div class="mnav">
+          <button class="mnbtn" onclick="prevM()">&#8592; Prev</button>
+          <span class="mttl" id="cmt"></span>
+          <button class="mnbtn" onclick="nextM()">Next &#8594;</button>
+        </div>
+        <div class="cgrid" id="cg"></div>
+        <div class="ckey">
+          <div class="cki"><div class="ckd" style="background:#c20075"></div>Pay Date</div>
+          <div class="cki"><div class="ckd" style="background:#ff9f0a"></div>People Team Input</div>
+          <div class="cki"><div class="ckd" style="background:#007aff"></div>Payroll Systems Input</div>
+          <div class="cki"><div class="ckd" style="background:#34c759"></div>CFO Dashboard Ready</div>
+          <div class="cki"><div class="ckd" style="background:#af52de"></div>CEO Dashboard Ready</div>
+          <div class="cki"><div class="ckd" style="background:#ff3b30"></div>CEO Review Deadline</div>
+          <div class="cki"><div class="ckd" style="background:#5856d6"></div>Approval in Systems</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="panel" id="panel">
+  <div class="pnlh"><h3 id="pnlt">Pay Cycle Details</h3><button class="pnlcl" onclick="closeP()">&#215;</button></div>
+  <div class="pnlb" id="pnlb"></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+var DATA = [{"entity":"Canada Payroll","pay_date":"2026-03-13","people_team_input":"2026-02-27","payroll_systems_input":"2026-02-28","dashboard_cfos_ready":"2026-03-06","dashboard_ceo_ready":"2026-03-09","ceo_review_deadline":"2026-03-10","approval_in_systems":"2026-03-10"},{"entity":"Canada Payroll","pay_date":"2026-03-31","people_team_input":"2026-03-17","payroll_systems_input":"2026-03-18","dashboard_cfos_ready":"2026-03-22","dashboard_ceo_ready":"2026-03-23","ceo_review_deadline":"2026-03-24","approval_in_systems":"2026-03-25"},{"entity":"Canada Payroll","pay_date":"2026-04-15","people_team_input":"2026-04-01","payroll_systems_input":"2026-04-02","dashboard_cfos_ready":"2026-04-07","dashboard_ceo_ready":"2026-04-09","ceo_review_deadline":"2026-04-10","approval_in_systems":"2026-04-10"},{"entity":"Canada Payroll","pay_date":"2026-04-30","people_team_input":"2026-04-16","payroll_systems_input":"2026-04-17","dashboard_cfos_ready":"2026-04-21","dashboard_ceo_ready":"2026-04-22","ceo_review_deadline":"2026-04-23","approval_in_systems":"2026-04-24"},{"entity":"Canada Payroll","pay_date":"2026-05-15","people_team_input":"2026-05-01","payroll_systems_input":"2026-05-02","dashboard_cfos_ready":"2026-05-08","dashboard_ceo_ready":"2026-05-11","ceo_review_deadline":"2026-05-12","approval_in_systems":"2026-05-12"},{"entity":"Canada Payroll","pay_date":"2026-05-29","people_team_input":"2026-05-15","payroll_systems_input":"2026-05-16","dashboard_cfos_ready":"2026-05-22","dashboard_ceo_ready":"2026-05-23","ceo_review_deadline":"2026-05-24","approval_in_systems":"2026-05-25"},{"entity":"Canada Payroll","pay_date":"2026-06-15","people_team_input":"2026-05-30","payroll_systems_input":"2026-05-31","dashboard_cfos_ready":"2026-06-05","dashboard_ceo_ready":"2026-06-09","ceo_review_deadline":"2026-06-10","approval_in_systems":"2026-06-10"},{"entity":"Canada Payroll","pay_date":"2026-06-30","people_team_input":"2026-06-16","payroll_systems_input":"2026-06-17","dashboard_cfos_ready":"2026-06-21","dashboard_ceo_ready":"2026-06-22","ceo_review_deadline":"2026-06-23","approval_in_systems":"2026-06-24"},{"entity":"Canada Payroll","pay_date":"2026-07-15","people_team_input":"2026-07-01","payroll_systems_input":"2026-07-02","dashboard_cfos_ready":"2026-07-07","dashboard_ceo_ready":"2026-07-09","ceo_review_deadline":"2026-07-10","approval_in_systems":"2026-07-10"},{"entity":"Canada Payroll","pay_date":"2026-07-31","people_team_input":"2026-07-17","payroll_systems_input":"2026-07-18","dashboard_cfos_ready":"2026-07-24","dashboard_ceo_ready":"2026-07-25","ceo_review_deadline":"2026-07-26","approval_in_systems":"2026-07-27"},{"entity":"Canada Payroll","pay_date":"2026-08-14","people_team_input":"2026-07-31","payroll_systems_input":"2026-08-01","dashboard_cfos_ready":"2026-08-07","dashboard_ceo_ready":"2026-08-10","ceo_review_deadline":"2026-08-11","approval_in_systems":"2026-08-11"},{"entity":"Canada Payroll","pay_date":"2026-08-31","people_team_input":"2026-08-15","payroll_systems_input":"2026-08-16","dashboard_cfos_ready":"2026-08-22","dashboard_ceo_ready":"2026-08-23","ceo_review_deadline":"2026-08-24","approval_in_systems":"2026-08-25"},{"entity":"Canada Payroll","pay_date":"2026-09-15","people_team_input":"2026-09-01","payroll_systems_input":"2026-09-02","dashboard_cfos_ready":"2026-09-04","dashboard_ceo_ready":"2026-09-09","ceo_review_deadline":"2026-09-10","approval_in_systems":"2026-09-10"},{"entity":"Canada Payroll","pay_date":"2026-09-30","people_team_input":"2026-09-16","payroll_systems_input":"2026-09-17","dashboard_cfos_ready":"2026-09-21","dashboard_ceo_ready":"2026-09-22","ceo_review_deadline":"2026-09-23","approval_in_systems":"2026-09-24"},{"entity":"Canada Payroll","pay_date":"2026-10-15","people_team_input":"2026-10-01","payroll_systems_input":"2026-10-02","dashboard_cfos_ready":"2026-10-05","dashboard_ceo_ready":"2026-10-07","ceo_review_deadline":"2026-10-08","approval_in_systems":"2026-10-09"},{"entity":"Canada Payroll","pay_date":"2026-10-30","people_team_input":"2026-10-16","payroll_systems_input":"2026-10-17","dashboard_cfos_ready":"2026-10-23","dashboard_ceo_ready":"2026-10-24","ceo_review_deadline":"2026-10-25","approval_in_systems":"2026-10-26"},{"entity":"Canada Payroll","pay_date":"2026-11-13","people_team_input":"2026-10-30","payroll_systems_input":"2026-10-31","dashboard_cfos_ready":"2026-11-06","dashboard_ceo_ready":"2026-11-09","ceo_review_deadline":"2026-11-10","approval_in_systems":"2026-11-10"},{"entity":"Canada Payroll","pay_date":"2026-11-30","people_team_input":"2026-11-14","payroll_systems_input":"2026-11-15","dashboard_cfos_ready":"2026-11-21","dashboard_ceo_ready":"2026-11-22","ceo_review_deadline":"2026-11-23","approval_in_systems":"2026-11-24"},{"entity":"Canada Payroll","pay_date":"2026-12-15","people_team_input":"2026-12-04","payroll_systems_input":"2026-12-05","dashboard_cfos_ready":"2026-12-11","dashboard_ceo_ready":"2026-12-14","ceo_review_deadline":"2026-12-15","approval_in_systems":"2026-12-15"},{"entity":"Canada Payroll","pay_date":"2026-12-31","people_team_input":"2026-12-17","payroll_systems_input":"2026-12-18","dashboard_cfos_ready":"2026-12-25","dashboard_ceo_ready":"2026-12-27","ceo_review_deadline":"2026-12-28","approval_in_systems":"2026-12-28"},{"entity":"UK Payroll","pay_date":"2026-03-31","people_team_input":"2026-03-15","payroll_systems_input":"2026-03-16","dashboard_cfos_ready":"2026-03-22","dashboard_ceo_ready":"2026-03-23","ceo_review_deadline":"2026-03-24","approval_in_systems":"2026-03-25"},{"entity":"UK Payroll","pay_date":"2026-04-30","people_team_input":"2026-04-14","payroll_systems_input":"2026-04-15","dashboard_cfos_ready":"2026-04-21","dashboard_ceo_ready":"2026-04-22","ceo_review_deadline":"2026-04-23","approval_in_systems":"2026-04-24"},{"entity":"UK Payroll","pay_date":"2026-05-29","people_team_input":"2026-05-13","payroll_systems_input":"2026-05-14","dashboard_cfos_ready":"2026-05-22","dashboard_ceo_ready":"2026-05-23","ceo_review_deadline":"2026-05-24","approval_in_systems":"2026-05-25"},{"entity":"UK Payroll","pay_date":"2026-06-30","people_team_input":"2026-06-14","payroll_systems_input":"2026-06-15","dashboard_cfos_ready":"2026-06-21","dashboard_ceo_ready":"2026-06-22","ceo_review_deadline":"2026-06-23","approval_in_systems":"2026-06-24"},{"entity":"UK Payroll","pay_date":"2026-07-31","people_team_input":"2026-07-15","payroll_systems_input":"2026-07-16","dashboard_cfos_ready":"2026-07-24","dashboard_ceo_ready":"2026-07-25","ceo_review_deadline":"2026-07-26","approval_in_systems":"2026-07-27"},{"entity":"UK Payroll","pay_date":"2026-08-31","people_team_input":"2026-08-13","payroll_systems_input":"2026-08-14","dashboard_cfos_ready":"2026-08-22","dashboard_ceo_ready":"2026-08-23","ceo_review_deadline":"2026-08-24","approval_in_systems":"2026-08-25"},{"entity":"UK Payroll","pay_date":"2026-09-30","people_team_input":"2026-09-14","payroll_systems_input":"2026-09-15","dashboard_cfos_ready":"2026-09-21","dashboard_ceo_ready":"2026-09-22","ceo_review_deadline":"2026-09-23","approval_in_systems":"2026-09-24"},{"entity":"UK Payroll","pay_date":"2026-10-30","people_team_input":"2026-10-14","payroll_systems_input":"2026-10-15","dashboard_cfos_ready":"2026-10-23","dashboard_ceo_ready":"2026-10-24","ceo_review_deadline":"2026-10-25","approval_in_systems":"2026-10-26"},{"entity":"UK Payroll","pay_date":"2026-11-30","people_team_input":"2026-11-12","payroll_systems_input":"2026-11-13","dashboard_cfos_ready":"2026-11-21","dashboard_ceo_ready":"2026-11-22","ceo_review_deadline":"2026-11-23","approval_in_systems":"2026-11-24"},{"entity":"UK Payroll","pay_date":"2026-12-31","people_team_input":"2026-12-04","payroll_systems_input":"2026-12-05","dashboard_cfos_ready":"2026-12-11","dashboard_ceo_ready":"2026-12-12","ceo_review_deadline":"2026-12-13","approval_in_systems":"2026-12-14"},{"entity":"US Payroll","pay_date":"2026-03-13","people_team_input":"2026-03-05","payroll_systems_input":"2026-03-06","dashboard_cfos_ready":"2026-03-06","dashboard_ceo_ready":"2026-03-09","ceo_review_deadline":"2026-03-10","approval_in_systems":"2026-03-11"},{"entity":"US Payroll","pay_date":"2026-03-31","people_team_input":"2026-03-21","payroll_systems_input":"2026-03-22","dashboard_cfos_ready":"2026-03-22","dashboard_ceo_ready":"2026-03-23","ceo_review_deadline":"2026-03-24","approval_in_systems":"2026-03-27"},{"entity":"US Payroll","pay_date":"2026-04-15","people_team_input":"2026-04-06","payroll_systems_input":"2026-04-07","dashboard_cfos_ready":"2026-04-07","dashboard_ceo_ready":"2026-04-09","ceo_review_deadline":"2026-04-10","approval_in_systems":"2026-04-13"},{"entity":"US Payroll","pay_date":"2026-04-30","people_team_input":"2026-04-20","payroll_systems_input":"2026-04-21","dashboard_cfos_ready":"2026-04-21","dashboard_ceo_ready":"2026-04-22","ceo_review_deadline":"2026-04-23","approval_in_systems":"2026-04-28"},{"entity":"US Payroll","pay_date":"2026-05-15","people_team_input":"2026-05-07","payroll_systems_input":"2026-05-08","dashboard_cfos_ready":"2026-05-08","dashboard_ceo_ready":"2026-05-11","ceo_review_deadline":"2026-05-12","approval_in_systems":"2026-05-13"},{"entity":"US Payroll","pay_date":"2026-05-29","people_team_input":"2026-05-21","payroll_systems_input":"2026-05-22","dashboard_cfos_ready":"2026-05-22","dashboard_ceo_ready":"2026-05-23","ceo_review_deadline":"2026-05-24","approval_in_systems":"2026-05-27"},{"entity":"US Payroll","pay_date":"2026-06-15","people_team_input":"2026-06-04","payroll_systems_input":"2026-06-05","dashboard_cfos_ready":"2026-06-05","dashboard_ceo_ready":"2026-06-09","ceo_review_deadline":"2026-06-10","approval_in_systems":"2026-06-11"},{"entity":"US Payroll","pay_date":"2026-06-30","people_team_input":"2026-06-20","payroll_systems_input":"2026-06-21","dashboard_cfos_ready":"2026-06-21","dashboard_ceo_ready":"2026-06-22","ceo_review_deadline":"2026-06-23","approval_in_systems":"2026-06-26"},{"entity":"US Payroll","pay_date":"2026-07-15","people_team_input":"2026-07-06","payroll_systems_input":"2026-07-07","dashboard_cfos_ready":"2026-07-07","dashboard_ceo_ready":"2026-07-09","ceo_review_deadline":"2026-07-10","approval_in_systems":"2026-07-13"},{"entity":"US Payroll","pay_date":"2026-07-31","people_team_input":"2026-07-23","payroll_systems_input":"2026-07-24","dashboard_cfos_ready":"2026-07-24","dashboard_ceo_ready":"2026-07-25","ceo_review_deadline":"2026-07-26","approval_in_systems":"2026-07-29"},{"entity":"US Payroll","pay_date":"2026-08-14","people_team_input":"2026-08-06","payroll_systems_input":"2026-08-07","dashboard_cfos_ready":"2026-08-07","dashboard_ceo_ready":"2026-08-10","ceo_review_deadline":"2026-08-11","approval_in_systems":"2026-08-12"},{"entity":"US Payroll","pay_date":"2026-08-31","people_team_input":"2026-08-21","payroll_systems_input":"2026-08-22","dashboard_cfos_ready":"2026-08-22","dashboard_ceo_ready":"2026-08-23","ceo_review_deadline":"2026-08-24","approval_in_systems":"2026-08-27"},{"entity":"US Payroll","pay_date":"2026-09-15","people_team_input":"2026-09-03","payroll_systems_input":"2026-09-04","dashboard_cfos_ready":"2026-09-04","dashboard_ceo_ready":"2026-09-09","ceo_review_deadline":"2026-09-10","approval_in_systems":"2026-09-11"},{"entity":"US Payroll","pay_date":"2026-09-30","people_team_input":"2026-09-20","payroll_systems_input":"2026-09-21","dashboard_cfos_ready":"2026-09-21","dashboard_ceo_ready":"2026-09-22","ceo_review_deadline":"2026-09-23","approval_in_systems":"2026-09-28"},{"entity":"US Payroll","pay_date":"2026-10-15","people_team_input":"2026-10-04","payroll_systems_input":"2026-10-05","dashboard_cfos_ready":"2026-10-05","dashboard_ceo_ready":"2026-10-07","ceo_review_deadline":"2026-10-08","approval_in_systems":"2026-10-13"},{"entity":"US Payroll","pay_date":"2026-10-30","people_team_input":"2026-10-22","payroll_systems_input":"2026-10-23","dashboard_cfos_ready":"2026-10-23","dashboard_ceo_ready":"2026-10-24","ceo_review_deadline":"2026-10-25","approval_in_systems":"2026-10-28"},{"entity":"US Payroll","pay_date":"2026-11-13","people_team_input":"2026-11-05","payroll_systems_input":"2026-11-06","dashboard_cfos_ready":"2026-11-06","dashboard_ceo_ready":"2026-11-09","ceo_review_deadline":"2026-11-10","approval_in_systems":"2026-11-11"},{"entity":"US Payroll","pay_date":"2026-11-30","people_team_input":"2026-11-20","payroll_systems_input":"2026-11-21","dashboard_cfos_ready":"2026-11-21","dashboard_ceo_ready":"2026-11-22","ceo_review_deadline":"2026-11-23","approval_in_systems":"2026-11-25"},{"entity":"US Payroll","pay_date":"2026-12-15","people_team_input":"2026-12-10","payroll_systems_input":"2026-12-11","dashboard_cfos_ready":"2026-12-11","dashboard_ceo_ready":"2026-12-14","ceo_review_deadline":"2026-12-15","approval_in_systems":"2026-12-16"},{"entity":"US Payroll","pay_date":"2026-12-31","people_team_input":"2026-12-22","payroll_systems_input":"2026-12-23","dashboard_cfos_ready":"2026-12-23","dashboard_ceo_ready":"2026-12-27","ceo_review_deadline":"2026-12-28","approval_in_systems":"2026-12-29"},{"entity":"Japan Payroll","pay_date":"2026-03-31","people_team_input":"2026-03-15","payroll_systems_input":"2026-03-16","dashboard_cfos_ready":"2026-03-22","dashboard_ceo_ready":"2026-03-23","ceo_review_deadline":"2026-03-24","approval_in_systems":"2026-03-25"},{"entity":"Japan Payroll","pay_date":"2026-04-30","people_team_input":"2026-04-14","payroll_systems_input":"2026-04-15","dashboard_cfos_ready":"2026-04-21","dashboard_ceo_ready":"2026-04-22","ceo_review_deadline":"2026-04-23","approval_in_systems":"2026-04-24"},{"entity":"Japan Payroll","pay_date":"2026-05-29","people_team_input":"2026-05-13","payroll_systems_input":"2026-05-14","dashboard_cfos_ready":"2026-05-22","dashboard_ceo_ready":"2026-05-23","ceo_review_deadline":"2026-05-24","approval_in_systems":"2026-05-25"},{"entity":"Japan Payroll","pay_date":"2026-06-30","people_team_input":"2026-06-14","payroll_systems_input":"2026-06-15","dashboard_cfos_ready":"2026-06-21","dashboard_ceo_ready":"2026-06-22","ceo_review_deadline":"2026-06-23","approval_in_systems":"2026-06-24"},{"entity":"Japan Payroll","pay_date":"2026-07-31","people_team_input":"2026-07-15","payroll_systems_input":"2026-07-16","dashboard_cfos_ready":"2026-07-24","dashboard_ceo_ready":"2026-07-25","ceo_review_deadline":"2026-07-26","approval_in_systems":"2026-07-27"},{"entity":"Japan Payroll","pay_date":"2026-08-31","people_team_input":"2026-08-13","payroll_systems_input":"2026-08-14","dashboard_cfos_ready":"2026-08-22","dashboard_ceo_ready":"2026-08-23","ceo_review_deadline":"2026-08-24","approval_in_systems":"2026-08-25"},{"entity":"Japan Payroll","pay_date":"2026-09-30","people_team_input":"2026-09-14","payroll_systems_input":"2026-09-15","dashboard_cfos_ready":"2026-09-21","dashboard_ceo_ready":"2026-09-22","ceo_review_deadline":"2026-09-23","approval_in_systems":"2026-09-24"},{"entity":"Japan Payroll","pay_date":"2026-10-30","people_team_input":"2026-10-14","payroll_systems_input":"2026-10-15","dashboard_cfos_ready":"2026-10-23","dashboard_ceo_ready":"2026-10-24","ceo_review_deadline":"2026-10-25","approval_in_systems":"2026-10-26"},{"entity":"Japan Payroll","pay_date":"2026-11-30","people_team_input":"2026-11-12","payroll_systems_input":"2026-11-13","dashboard_cfos_ready":"2026-11-21","dashboard_ceo_ready":"2026-11-22","ceo_review_deadline":"2026-11-23","approval_in_systems":"2026-11-24"},{"entity":"Japan Payroll","pay_date":"2026-12-31","people_team_input":"2026-12-04","payroll_systems_input":"2026-12-05","dashboard_cfos_ready":"2026-12-11","dashboard_ceo_ready":"2026-12-12","ceo_review_deadline":"2026-12-13","approval_in_systems":"2026-12-14"},{"entity":"AU Payroll","pay_date":"2026-03-31","people_team_input":"2026-03-21","payroll_systems_input":"2026-03-22","dashboard_cfos_ready":"2026-03-22","dashboard_ceo_ready":"2026-03-23","ceo_review_deadline":"2026-03-24","approval_in_systems":"2026-03-26"},{"entity":"AU Payroll","pay_date":"2026-04-30","people_team_input":"2026-04-20","payroll_systems_input":"2026-04-21","dashboard_cfos_ready":"2026-04-21","dashboard_ceo_ready":"2026-04-22","ceo_review_deadline":"2026-04-23","approval_in_systems":"2026-04-27"},{"entity":"AU Payroll","pay_date":"2026-05-29","people_team_input":"2026-05-21","payroll_systems_input":"2026-05-22","dashboard_cfos_ready":"2026-05-22","dashboard_ceo_ready":"2026-05-23","ceo_review_deadline":"2026-05-24","approval_in_systems":"2026-05-26"},{"entity":"AU Payroll","pay_date":"2026-06-30","people_team_input":"2026-06-20","payroll_systems_input":"2026-06-21","dashboard_cfos_ready":"2026-06-21","dashboard_ceo_ready":"2026-06-22","ceo_review_deadline":"2026-06-23","approval_in_systems":"2026-06-25"},{"entity":"AU Payroll","pay_date":"2026-07-31","people_team_input":"2026-07-23","payroll_systems_input":"2026-07-24","dashboard_cfos_ready":"2026-07-24","dashboard_ceo_ready":"2026-07-25","ceo_review_deadline":"2026-07-26","approval_in_systems":"2026-07-28"},{"entity":"AU Payroll","pay_date":"2026-08-31","people_team_input":"2026-08-21","payroll_systems_input":"2026-08-22","dashboard_cfos_ready":"2026-08-22","dashboard_ceo_ready":"2026-08-23","ceo_review_deadline":"2026-08-24","approval_in_systems":"2026-08-26"},{"entity":"AU Payroll","pay_date":"2026-09-30","people_team_input":"2026-09-20","payroll_systems_input":"2026-09-21","dashboard_cfos_ready":"2026-09-21","dashboard_ceo_ready":"2026-09-22","ceo_review_deadline":"2026-09-23","approval_in_systems":"2026-09-25"},{"entity":"AU Payroll","pay_date":"2026-10-30","people_team_input":"2026-10-22","payroll_systems_input":"2026-10-23","dashboard_cfos_ready":"2026-10-23","dashboard_ceo_ready":"2026-10-24","ceo_review_deadline":"2026-10-25","approval_in_systems":"2026-10-27"},{"entity":"AU Payroll","pay_date":"2026-11-30","people_team_input":"2026-11-20","payroll_systems_input":"2026-11-21","dashboard_cfos_ready":"2026-11-21","dashboard_ceo_ready":"2026-11-22","ceo_review_deadline":"2026-11-23","approval_in_systems":"2026-11-25"},{"entity":"AU Payroll","pay_date":"2026-12-31","people_team_input":"2026-12-22","payroll_systems_input":"2026-12-23","dashboard_cfos_ready":"2026-12-23","dashboard_ceo_ready":"2026-12-27","ceo_review_deadline":"2026-12-28","approval_in_systems":"2026-12-28"}];
+
+var COLORS = {
+  'US Payroll':     {bg:'#e8f5e9', text:'#1b5e20', dot:'#2e7d32'},
+  'UK Payroll':     {bg:'#e3f2fd', text:'#0d47a1', dot:'#1565c0'},
+  'Canada Payroll': {bg:'#fce4ec', text:'#880e4f', dot:'#c2185b'},
+  'AU Payroll':     {bg:'#f3e5f5', text:'#4a148c', dot:'#7b1fa2'},
+  'Japan Payroll':  {bg:'#fff8e1', text:'#e65100', dot:'#f57c00'}
+};
+
+var TC = {
+  pay_date:'#c20075', people_team_input:'#ff9f0a',
+  payroll_systems_input:'#007aff', dashboard_cfos_ready:'#34c759',
+  dashboard_ceo_ready:'#af52de', ceo_review_deadline:'#ff3b30',
+  approval_in_systems:'#5856d6'
+};
+var TL = {
+  pay_date:'Pay Date', people_team_input:'People Team Input',
+  payroll_systems_input:'Payroll Systems Input', dashboard_cfos_ready:'CFO Dashboard Ready',
+  dashboard_ceo_ready:'CEO Dashboard Ready', ceo_review_deadline:'CEO Review Deadline',
+  approval_in_systems:'Approval in Systems'
+};
+var MN=['January','February','March','April','May','June','July','August','September','October','November','December'];
+var TODAY=(function(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');})();
+
+var allData=JSON.parse(JSON.stringify(DATA));
+var fActive=[],fArch=[],selE=new Set(),sCol='pay_date',sAsc=true,pg=1,pp=25,view='table',archOpen=false;
+var cY=new Date().getFullYear(),cM=new Date().getMonth();
+var rowStore=[];
+
+function hr(h){return parseInt(h.slice(1,3),16)+','+parseInt(h.slice(3,5),16)+','+parseInt(h.slice(5,7),16);}
+
+function init(){
+  var ents=[...new Set(allData.map(function(d){return d.entity;}))].sort();
+  selE=new Set(ents);
+  buildChips(ents); buildPD(); buildMY();
+  document.getElementById('fi').onchange=function(e){if(e.target.files[0])loadXL(e.target.files[0]);};
+  document.addEventListener('dragover',function(e){e.preventDefault();document.getElementById('dov').classList.add('vis');});
+  document.addEventListener('dragleave',function(e){if(!e.relatedTarget)document.getElementById('dov').classList.remove('vis');});
+  document.addEventListener('drop',function(e){
+    e.preventDefault();document.getElementById('dov').classList.remove('vis');
+    var f=e.dataTransfer.files[0];
+    if(f&&(f.name.slice(-5)==='.xlsx'||f.name.slice(-4)==='.xls'))loadXL(f);
+    else toast('Please drop an Excel file','err');
+  });
+  document.getElementById('pdf').onchange=applyF;
+  document.getElementById('mf').onchange=applyF;
+  document.getElementById('yf').onchange=applyF;
+  document.getElementById('sri').oninput=applyF;
+  applyF();
+}
+
+function buildChips(ents){
+  var c=document.getElementById('chips');c.innerHTML='';
+  ents.forEach(function(e){
+    var col=COLORS[e]||{bg:'#f0f0f5',text:'#333',dot:'#888'};
+    var div=document.createElement('div');
+    div.className='chip on';div.dataset.e=e;
+    div.innerHTML='<span class="dot" style="background:'+col.dot+'"></span>'+e;
+    div.onclick=function(){togE(e);};
+    c.appendChild(div);
+  });
+}
+
+function buildPD(){
+  var s=document.getElementById('pdf'),v=s.value;
+  s.innerHTML='<option value="">All Pay Dates</option>';
+  var dates=[...new Set(allData.map(function(d){return d.pay_date;}).filter(Boolean))].sort();
+  dates.forEach(function(d){var o=document.createElement('option');o.value=d;o.textContent=fmt(d);s.appendChild(o);});
+  if(v)s.value=v;
+}
+
+function buildMY(){
+  var ms=document.getElementById('mf'),ys=document.getElementById('yf'),mv=ms.value,yv=ys.value;
+  ms.innerHTML='<option value="">All Months</option>';
+  MN.forEach(function(m,i){var o=document.createElement('option');o.value=i+1;o.textContent=m;ms.appendChild(o);});
+  ys.innerHTML='<option value="">All Years</option>';
+  var yrs=[...new Set(allData.map(function(d){return d.pay_date&&d.pay_date.slice(0,4);}).filter(Boolean))].sort();
+  yrs.forEach(function(y){var o=document.createElement('option');o.value=y;o.textContent=y;ys.appendChild(o);});
+  if(mv)ms.value=mv;if(yv)ys.value=yv;
+}
+
+function togE(e){
+  if(selE.has(e))selE.delete(e);else selE.add(e);
+  document.querySelectorAll('.chip').forEach(function(c){if(c.dataset.e===e)c.classList.toggle('on',selE.has(e));});
+  applyF();
+}
+
+function applyF(){
+  var pd=document.getElementById('pdf').value,mn=document.getElementById('mf').value,yr=document.getElementById('yf').value,sr=document.getElementById('sri').value.toLowerCase();
+  var base=allData.filter(function(r){
+    if(!selE.has(r.entity))return false;
+    if(pd&&r.pay_date!==pd)return false;
+    if(mn&&r.pay_date&&parseInt(r.pay_date.slice(5,7))!==parseInt(mn))return false;
+    if(yr&&r.pay_date&&r.pay_date.slice(0,4)!==yr)return false;
+    if(sr&&r.entity.toLowerCase().indexOf(sr)===-1)return false;
+    return true;
+  });
+  function sorter(a,b){var av=a[sCol]||'',bv=b[sCol]||'';return sAsc?av.localeCompare(bv):bv.localeCompare(av);}
+  fActive=base.filter(function(r){return r.pay_date>=TODAY;}).sort(sorter);
+  fArch=base.filter(function(r){return r.pay_date<TODAY;}).sort(function(a,b){return b.pay_date.localeCompare(a.pay_date);});
+  pg=1;
+  document.getElementById('rcnt').textContent=fActive.length+' active';
+  document.getElementById('acnt').textContent=fArch.length;
+  renderTbl();renderArch();
+  if(view==='cal')renderCal();
+}
+
+function clearF(){
+  ['pdf','mf','yf'].forEach(function(id){document.getElementById(id).value='';});
+  document.getElementById('sri').value='';
+  selE=new Set(allData.map(function(d){return d.entity;}));
+  document.querySelectorAll('.chip').forEach(function(c){c.classList.add('on');});
+  applyF();
+}
+
+function srt(col){
+  if(sCol===col)sAsc=!sAsc;else{sCol=col;sAsc=true;}
+  document.querySelectorAll('thead th').forEach(function(th){th.classList.toggle('sorted',th.getAttribute('onclick')==="srt('"+col+"')");});
+  applyF();
+}
+
+function mkRow(r,isA,idx){
+  rowStore[idx]=r;
+  var col=COLORS[r.entity]||{bg:'#f0f0f5',text:'#555',dot:'#888'};
+  var isT=(r.pay_date===TODAY);
+  var fl='';
+  if(isT)fl='<span class="flag" style="background:#34c759">today</span>';
+  else if(isA)fl='<span class="flag" style="background:var(--beetroot)">upcoming</span>';
+  var cls=(isA&&!isT)?'up':'';
+  var h='<tr class="'+cls+'" onclick="openRow('+idx+')">';
+  h+='<td><span class="eb" style="background:'+col.bg+';color:'+col.text+'">';
+  h+='<span class="edot" style="background:'+col.dot+'"></span>';
+  h+=r.entity+'</span></td>';
+  h+='<td class="pdc">'+fmt(r.pay_date)+fl+'</td>';
+  h+='<td>'+fmtC(r.people_team_input)+'</td>';
+  h+='<td>'+fmtC(r.payroll_systems_input)+'</td>';
+  h+='<td>'+fmtC(r.dashboard_cfos_ready)+'</td>';
+  h+='<td>'+fmtC(r.dashboard_ceo_ready)+'</td>';
+  h+='<td>'+fmtC(r.ceo_review_deadline)+'</td>';
+  h+='<td>'+fmtC(r.approval_in_systems)+'</td>';
+  h+='</tr>';
+  return h;
+}
+
+function openRow(idx){showP(rowStore[idx]);}
+
+function renderTbl(){
+  rowStore=[];
+  var tb=document.getElementById('tb'),tot=fActive.length;
+  var st=(pg-1)*pp,en=(pp===9999?tot:Math.min(st+pp,tot)),page=fActive.slice(st,en);
+  if(!page.length){
+    tb.innerHTML='<tr><td colspan="8"><div class="nodata"><span class="ico">&#128197;</span>No upcoming pay dates match your filters</div></td></tr>';
+    document.getElementById('pgbar').style.display='none';return;
+  }
+  var h='';page.forEach(function(r,i){h+=mkRow(r,true,i);});
+  tb.innerHTML=h;renderPg(tot,st,en);
+}
+
+function renderArch(){
+  var ab=document.getElementById('ab');
+  if(!fArch.length){ab.innerHTML='<tr><td colspan="8"><div class="nodata" style="padding:24px"><span class="ico">&#128193;</span>No archived records</div></td></tr>';return;}
+  var h='';fArch.forEach(function(r,i){h+=mkRow(r,false,9000+i);});
+  ab.innerHTML=h;
+}
+
+function fmt(d){
+  if(!d)return'<span class="null-cell">&mdash;</span>';
+  var p=d.split('-'),mn=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return mn[parseInt(p[1])-1]+' '+parseInt(p[2])+', '+p[0];
+}
+function fmtC(d){
+  if(!d)return'<span class="null-cell">&mdash;</span>';
+  var cls=(d===TODAY)?'dt2':(d<TODAY)?'dp2':'du';
+  return'<span class="'+cls+'">'+fmt(d)+'</span>';
+}
+
+function togArch(){
+  archOpen=!archOpen;
+  document.getElementById('as').style.display=archOpen?'block':'none';
+  document.getElementById('achev').classList.toggle('open',archOpen);
+}
+
+function renderPg(tot,st,en){
+  document.getElementById('pgbar').style.display='flex';
+  document.getElementById('pgi').textContent='Showing '+(st+1)+'–'+en+' of '+tot;
+  var tp=(pp===9999)?1:Math.ceil(tot/pp);
+  var pages=[];
+  if(tp<=7){for(var i=1;i<=tp;i++)pages.push(i);}
+  else{pages=[1];if(pg>3)pages.push('...');for(var i2=Math.max(2,pg-1);i2<=Math.min(tp-1,pg+1);i2++)pages.push(i2);if(pg<tp-2)pages.push('...');pages.push(tp);}
+  var h='<button class="pb" onclick="goP('+(pg-1)+')" '+(pg===1?'disabled':'')+'>&#8249;</button>';
+  pages.forEach(function(p){if(p==='...')h+='<span style="padding:4px 3px;color:var(--gray)">&#8230;</span>';else h+='<button class="pb'+(p===pg?' on':'')+'" onclick="goP('+p+')">'+p+'</button>';});
+  h+='<button class="pb" onclick="goP('+(pg+1)+')" '+(pg===tp?'disabled':'')+'>&#8250;</button>';
+  document.getElementById('pbs').innerHTML=h;
+}
+function goP(p){var mx=(pp===9999)?1:Math.ceil(fActive.length/pp);if(p<1||p>mx)return;pg=p;renderTbl();}
+function chPP(){pp=parseInt(document.getElementById('pps').value);pg=1;renderTbl();}
+
+function setV(v){
+  view=v;
+  document.getElementById('tv').style.display=(v==='table')?'block':'none';
+  document.getElementById('cv').style.display=(v==='cal')?'block':'none';
+  document.getElementById('vtbl').classList.toggle('on',v==='table');
+  document.getElementById('vcal').classList.toggle('on',v==='cal');
+  if(v==='cal')renderCal();
+}
+
+function renderCal(){
+  document.getElementById('cmt').textContent=MN[cM]+' '+cY;
+  var fd1=new Date(cY,cM,1).getDay(),dim=new Date(cY,cM+1,0).getDate(),dip=new Date(cY,cM,0).getDate();
+  var em={};
+  allData.filter(function(r){return selE.has(r.entity);}).forEach(function(row){
+    var fields=[
+      ['pay_date',row.pay_date],['people_team_input',row.people_team_input],
+      ['payroll_systems_input',row.payroll_systems_input],['dashboard_cfos_ready',row.dashboard_cfos_ready],
+      ['dashboard_ceo_ready',row.dashboard_ceo_ready],['ceo_review_deadline',row.ceo_review_deadline],
+      ['approval_in_systems',row.approval_in_systems]
+    ];
+    fields.forEach(function(f){
+      var type=f[0],ds=f[1];if(!ds)return;
+      var p=ds.split('-'),y=parseInt(p[0]),m=parseInt(p[1]),d=parseInt(p[2]);
+      if(y!==cY||m-1!==cM)return;
+      if(!em[d])em[d]={};if(!em[d][type])em[d][type]=[];
+      em[d][type].push(row.entity);
+    });
+  });
+  var DH=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  var h=DH.map(function(d){return'<div class="cdh">'+d+'</div>';}).join('');
+  for(var i=0;i<fd1;i++)h+='<div class="cd om"><div class="cdn">'+(dip-fd1+i+1)+'</div></div>';
+  for(var d=1;d<=dim;d++){
+    var ds=cY+'-'+String(cM+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    var isT=(ds===TODAY),isPast=(ds<TODAY),types=em[d]||{};
+    var evH=Object.entries(types).slice(0,5).map(function(e){
+      var type=e[0],ents=e[1],col=TC[type],cnt=ents.length;
+      var tip=TL[type]+': '+ents.slice(0,3).join(', ')+(cnt>3?', +'+(cnt-3)+' more':'');
+      return'<span class="cev" style="background:rgba('+hr(col)+',.14);color:'+col+';border-left:2px solid '+col+';'+(isPast?'opacity:.45':'')+'" title="'+tip+'">'+TL[type]+(cnt>1?' ('+cnt+')':'')+'</span>';
+    }).join('');
+    var mk=Object.keys(types).length;
+    var more=(mk>5)?'<div style="font-size:9px;color:var(--gray);padding:1px 3px">+'+(mk-5)+' more</div>':'';
+    h+='<div class="cd'+(isT?' tod':'')+'"><div class="cdn">'+d+'</div>'+evH+more+'</div>';
+  }
+  var tot=Math.ceil((fd1+dim)/7)*7;
+  for(var j=1;j<=tot-fd1-dim;j++)h+='<div class="cd om"><div class="cdn">'+j+'</div></div>';
+  document.getElementById('cg').innerHTML=h;
+}
+function prevM(){cM--;if(cM<0){cM=11;cY--;}renderCal();}
+function nextM(){cM++;if(cM>11){cM=0;cY++;}renderCal();}
+
+function showP(r){
+  var col=COLORS[r.entity]||{bg:'#f0f0f5',text:'#555',dot:'#888'};
+  document.getElementById('pnlt').textContent=r.entity;
+  var steps=[
+    {l:'People Team Input',d:r.people_team_input,c:'#ff9f0a'},
+    {l:'Payroll Systems Input',d:r.payroll_systems_input,c:'#007aff'},
+    {l:'CFO Dashboard Ready',d:r.dashboard_cfos_ready,c:'#34c759'},
+    {l:'CEO Dashboard Ready',d:r.dashboard_ceo_ready,c:'#af52de'},
+    {l:'CEO Review Deadline',d:r.ceo_review_deadline,c:'#ff3b30'},
+    {l:'Approval in Systems',d:r.approval_in_systems,c:'#5856d6'}
+  ];
+  var isArch=(r.pay_date<TODAY);
+  var h='<div class="pnls"><div class="pnlst">Pay Cycle</div>';
+  h+='<span class="eb" style="background:'+col.bg+';color:'+col.text+';font-size:13px;padding:5px 13px;display:inline-flex">';
+  h+='<span class="edot" style="background:'+col.dot+'"></span>'+r.entity+'</span>';
+  h+='<div style="font-size:21px;font-weight:700;margin-top:10px">'+fmt(r.pay_date)+'</div>';
+  h+='<div style="font-size:11px;color:var(--gray);margin-top:3px">Pay Date';
+  if(isArch)h+=' &mdash; <span style="color:#ff9f0a;font-weight:600">Archived</span>';
+  h+='</div></div>';
+  h+='<div class="pnls"><div class="pnlst">Workflow Timeline</div><div class="tl">';
+  steps.forEach(function(s){
+    h+='<div class="tli"><div class="tldot" style="background:'+s.c+'"></div><div><div class="tll">'+s.l+'</div><div class="tldate">'+fmt(s.d)+'</div></div></div>';
+  });
+  h+='</div></div>';
+  document.getElementById('pnlb').innerHTML=h;
+  document.getElementById('panel').classList.add('open');
+}
+function closeP(){document.getElementById('panel').classList.remove('open');}
+
+function loadXL(file){
+  var reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      var wb=XLSX.read(e.target.result,{type:'array',cellDates:true});
+      var nd=[];
+      wb.SheetNames.forEach(function(name){
+        var ws=wb.Sheets[name],json=XLSX.utils.sheet_to_json(ws,{defval:null});
+        if(!json.length)return;
+        var cols=Object.keys(json[0]);
+        function find(k1,k2){return cols.find(function(c){var cl=c.toLowerCase();return cl.indexOf(k1)>-1&&(!k2||cl.indexOf(k2)>-1);});}
+        var ek=find('entity'),pk=find('pay','date')||find('pay');
+        if(!ek||!pk)return;
+        function fd(v){
+          if(!v)return null;
+          if(v instanceof Date)return v.getFullYear()+'-'+String(v.getMonth()+1).padStart(2,'0')+'-'+String(v.getDate()).padStart(2,'0');
+          if(typeof v==='string'){var m=v.match(/(\d{4})-(\d{2})-(\d{2})/);if(m)return m[0];}
+          return null;
+        }
+        json.forEach(function(row){
+          if(!row[ek]||!row[pk])return;
+          nd.push({entity:String(row[ek]).trim(),pay_date:fd(row[pk]),people_team_input:fd(row[find('people')]),payroll_systems_input:fd(row[find('systems')]),dashboard_cfos_ready:fd(row[find('cfo')]||row[find('dashboard','people')]),dashboard_ceo_ready:fd(row[find('ceo','dashboard')]),ceo_review_deadline:fd(row[find('ceo','review')]),approval_in_systems:fd(row[find('approval')])});
+        });
+      });
+      if(!nd.length){toast('No valid payroll data found','err');return;}
+      allData=nd;document.getElementById('fi').value='';
+      init();toast('Loaded '+nd.length+' records','ok');
+    }catch(err){toast('Error: '+err.message,'err');}
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function toast(msg,type){
+  var t=document.getElementById('toast');t.textContent=msg;t.className='toast '+type+' show';
+  setTimeout(function(){t.classList.remove('show');},3500);
+}
+
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closeP();});
+init();
+</script>
+</body>
+</html>
