@@ -12,7 +12,7 @@
   --beetroot:#C20075;--wine:#480029;--gray:#86868B;
   --black:#000;--bg:#f5f5f7;--border:#e0e0e5;
 }
-body{font-family:"Archivo",sans-serif;background:var(--bg);color:var(--black);font-size:13px;min-height:100vh}
+body{font-family:"Archivo",sans-serif;background:var(--bg);color:var(--lack);font-size:13px;min-height:100vh}
 
 /* HEADER */
 .header{background:var(--beetroot);padding:0 28px;display:flex;align-items:center;justify-content:space-between;height:56px;position:sticky;top:0;z-index:100;box-shadow:0 2px 10px rgba(194,0,117,.3)}
@@ -206,8 +206,7 @@ tbody td:last-child{border-right:none}
             <th onclick="srt('people_team_input')" style="min-width:140px">People Data Due</th>
             <th onclick="srt('payroll_systems_input')" style="min-width:155px">Systems Input Due</th>
             <th onclick="srt('dashboard_cfos_ready')" style="min-width:150px">CFO &amp; People Ops Review Ready</th>
-            <th onclick="srt('dashboard_ceo_ready')" style="min-width:150px">CEO Review Ready</th>
-            <th onclick="srt('ceo_review_deadline')" style="min-width:150px">CEO Approval Due</th>
+            <th onclick="srt('ceo_review_deadline')" style="min-width:150px">CFO Approval Due</th>
             <th onclick="srt('approval_in_systems')" style="min-width:145px">Payroll Systems Approval</th>
           </tr></thead>
           <tbody id="tb"></tbody>
@@ -225,8 +224,8 @@ tbody td:last-child{border-right:none}
           <thead><tr>
             <th style="min-width:130px">Entity</th><th style="min-width:120px">Pay Date</th>
             <th style="min-width:140px">People Data Due</th><th style="min-width:155px">Systems Input Due</th>
-            <th style="min-width:150px">CFO &amp; People Ops Review Ready</th><th style="min-width:150px">CEO Review Ready</th>
-            <th style="min-width:150px">CEO Approval Due</th><th style="min-width:145px">Payroll Systems Approval</th>
+            <th style="min-width:150px">CFO &amp; People Ops Review Ready</th>
+            <th style="min-width:150px">CFO Approval Due</th><th style="min-width:145px">Payroll Systems Approval</th>
           </tr></thead>
           <tbody id="ab"></tbody>
         </table></div>
@@ -254,8 +253,7 @@ tbody td:last-child{border-right:none}
           <div class="cki"><div class="ckd" style="background:#ff9f0a"></div>People Team Input</div>
           <div class="cki"><div class="ckd" style="background:#007aff"></div>Payroll Systems Input</div>
           <div class="cki"><div class="ckd" style="background:#34c759"></div>CFO Dashboard Ready</div>
-          <div class="cki"><div class="ckd" style="background:#af52de"></div>CEO Dashboard Ready</div>
-          <div class="cki"><div class="ckd" style="background:#ff3b30"></div>CEO Review Deadline</div>
+          <div class="cki"><div class="ckd" style="background:#ff3b30"></div>CFO Approval Due</div>
           <div class="cki"><div class="ckd" style="background:#5856d6"></div>Approval in Systems</div>
         </div>
       </div>
@@ -283,13 +281,13 @@ var COLORS = {
 var TC = {
   pay_date:'#c20075', people_team_input:'#ff9f0a',
   payroll_systems_input:'#007aff', dashboard_cfos_ready:'#34c759',
-  dashboard_ceo_ready:'#af52de', ceo_review_deadline:'#ff3b30',
+  ceo_review_deadline:'#ff3b30',
   approval_in_systems:'#5856d6'
 };
 var TL = {
   pay_date:'Pay Date', people_team_input:'People Team Input',
   payroll_systems_input:'Payroll Systems Input', dashboard_cfos_ready:'CFO Dashboard Ready',
-  dashboard_ceo_ready:'CEO Dashboard Ready', ceo_review_deadline:'CEO Review Deadline',
+  ceo_review_deadline:'CFO Approval Due',
   approval_in_systems:'Approval in Systems'
 };
 var MN=['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -415,7 +413,6 @@ function mkRow(r,isA,idx){
   h+='<td>'+fmtC(r.people_team_input)+'</td>';
   h+='<td>'+fmtC(r.payroll_systems_input)+'</td>';
   h+='<td>'+fmtC(r.dashboard_cfos_ready)+'</td>';
-  h+='<td>'+fmtC(r.dashboard_ceo_ready)+'</td>';
   h+='<td>'+fmtC(r.ceo_review_deadline)+'</td>';
   h+='<td>'+fmtC(r.approval_in_systems)+'</td>';
   h+='</tr>';
@@ -501,7 +498,7 @@ function renderCal(){
     var fields=[
       ['pay_date',row.pay_date],['people_team_input',row.people_team_input],
       ['payroll_systems_input',row.payroll_systems_input],['dashboard_cfos_ready',row.dashboard_cfos_ready],
-      ['dashboard_ceo_ready',row.dashboard_ceo_ready],['ceo_review_deadline',row.ceo_review_deadline],
+      ['ceo_review_deadline',row.ceo_review_deadline],
       ['approval_in_systems',row.approval_in_systems]
     ];
     fields.forEach(function(f){
@@ -541,8 +538,7 @@ function showP(r){
     {l:'People Team Input',d:r.people_team_input,c:'#ff9f0a'},
     {l:'Payroll Systems Input',d:r.payroll_systems_input,c:'#007aff'},
     {l:'CFO Dashboard Ready',d:r.dashboard_cfos_ready,c:'#34c759'},
-    {l:'CEO Dashboard Ready',d:r.dashboard_ceo_ready,c:'#af52de'},
-    {l:'CEO Review Deadline',d:r.ceo_review_deadline,c:'#ff3b30'},
+    {l:'CFO Approval Due',d:r.ceo_review_deadline,c:'#ff3b30'},
     {l:'Approval in Systems',d:r.approval_in_systems,c:'#5856d6'}
   ];
   var isArch=(r.pay_date<TODAY);
@@ -584,7 +580,7 @@ function loadXL(file){
         }
         json.forEach(function(row){
           if(!row[ek]||!row[pk])return;
-          nd.push({entity:String(row[ek]).trim(),pay_date:fd(row[pk]),people_team_input:fd(row[find('people')]),payroll_systems_input:fd(row[find('systems')]),dashboard_cfos_ready:fd(row[find('cfo')]||row[find('dashboard','people')]),dashboard_ceo_ready:fd(row[find('ceo','dashboard')]),ceo_review_deadline:fd(row[find('ceo','review')]),approval_in_systems:fd(row[find('approval')])});
+          nd.push({entity:String(row[ek]).trim(),pay_date:fd(row[pk]),people_team_input:fd(row[find('people')]),payroll_systems_input:fd(row[find('systems')]),dashboard_cfos_ready:fd(row[find('cfo')]||row[find('dashboard','people')]),ceo_review_deadline:fd(row[find('ceo','review')]),approval_in_systems:fd(row[find('approval')])});
         });
       });
       if(!nd.length){toast('No valid payroll data found','err');return;}
